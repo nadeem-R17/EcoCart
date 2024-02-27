@@ -4,10 +4,16 @@ const User = require("../db/userModel");
 const router = express.Router();
 const jwt = require("jsonwebtoken");
 const { authenticateJwt } = require("../middleware/auth");
+const userValidation = require("../validation/userValidation");
 
 router.post("/signup", async (req, res) => {
   const { firstname, lastname, username, password, isAdmin } = req.body;
   console.log(req.body);
+
+  const { error } = userValidation(req.body);
+  if (error) return res.status(400).send(error.details[0].message);
+
+
   const user = await User.findOne({ username });
   if (user) {
     res.status(403).json({ message: "User already exists" });
@@ -40,6 +46,11 @@ router.post("/signup", async (req, res) => {
 
 router.post("/login", async (req, res) => {
   const { username, password } = req.body;
+
+  const { error } = userValidation(req.body);
+  if (error) return res.status(400).send(error.details[0].message);
+
+
   const user = await User.findOne({ username, password });
   console.log(user);
   if (user) {
