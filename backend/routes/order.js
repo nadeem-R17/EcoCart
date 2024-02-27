@@ -3,8 +3,9 @@ const Order = require("../db/orderModel");
 const User = require("../db/userModel");
 const Product = require("../db/productModel");
 const { authenticateJwt } = require("../middleware/auth");
-
 const router = express.Router();
+const validateProductAndUser = require("../validation/validateProductAndUser");
+const orderValidation = require("../validation/orderValidation");
 
 //order history
 router.get("/history", authenticateJwt, async (req, res) => {
@@ -25,6 +26,10 @@ router.get("/history", authenticateJwt, async (req, res) => {
 // add item in a cart
 router.post("/cart", authenticateJwt, async (req, res) => {
   const { productId, userId } = req.body;
+
+  const { error } = validateProductAndUser(req.body);
+  if (error) return res.status(400).send(error.details[0].message);
+
 
   const product = await Product.findById(productId);
   if (!product) {
@@ -58,6 +63,10 @@ router.post("/cart", authenticateJwt, async (req, res) => {
 router.delete("/cart", authenticateJwt, async (req, res) => {
   const { productId, userId } = req.body;
 
+  const { error } = validateProductAndUser(req.body);
+  if (error) return res.status(400).send(error.details[0].message);
+
+
   const product = await Product.findById(productId);
   if (!product) {
     return res.status(404).send({ message: "Product not found" });
@@ -89,6 +98,10 @@ router.delete("/cart", authenticateJwt, async (req, res) => {
 // Decrease cart item quantity
 router.put("/cart/decrease", authenticateJwt, async (req, res) => {
   const { productId, userId } = req.body;
+
+  const { error } = validateProductAndUser(req.body);
+  if (error) return res.status(400).send(error.details[0].message);
+
 
   const user = await User.findById(userId);
   if (!user) {
@@ -131,6 +144,10 @@ router.get("/:id", authenticateJwt, async (req, res) => {
 // Buy an item
 router.post("/buy", authenticateJwt, async (req, res) => {
   const { shippingAddress, userId, totalPrice } = req.body;
+
+  const { error } = orderValidation(req.body);
+  if (error) return res.status(400).send(error.details[0].message);
+
 
   const user = await User.findById(userId);
   if (!user) {

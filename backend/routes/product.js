@@ -2,6 +2,7 @@ const express = require("express");
 const { authenticateJwt, SECRET } = require("../middleware/auth");
 const Product = require("../db/productModel");
 const router = express.Router();
+const productValidation = require("../validation/productValidation");
 
 //admin--create
 router.post("/products", authenticateJwt, async (req, res) => {
@@ -10,6 +11,10 @@ router.post("/products", authenticateJwt, async (req, res) => {
   if (role !== "admin") {
     return res.status(403).json({ message: "Only admins can create products" });
   }
+
+  const { error } = productValidation(req.body);
+  if (error) return res.status(400).send(error.details[0].message);
+
 
   const product = new Product(req.body);
   console.log("product to create ", product);
@@ -46,6 +51,9 @@ router.put("/products/:productId", authenticateJwt, async (req, res) => {
     return res.status(403).json({ message: "Only admins can update products" });
   }
 
+  const { error } = productValidation(req.body);
+  if (error) return res.status(400).send(error.details[0].message);
+
   try {
     const product = await Product.findByIdAndUpdate(
       req.params.productId,
@@ -65,6 +73,8 @@ router.get("/products", authenticateJwt, async (req, res) => {
   const products = await Product.find();
   res.json({ products });
 });
+
+
 
 router.get("/products/:productId", authenticateJwt, async (req, res) => {
   try {
